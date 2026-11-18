@@ -126,13 +126,13 @@ jobs:
           cat > notes.md <<'EOF'
           ## Installer
 
-          1. Telecharger `CoTransfert-${{ github.ref_name }}.zip` ci-dessous et l'extraire sur chaque poste.
-          2. Double-cliquer sur `CoTransfert.cmd` : la page de reglage s'ouvre dans le navigateur.
+          1. Télécharger `CoTransfert-${{ github.ref_name }}.zip` ci-dessous et l'extraire sur chaque poste.
+          2. Double-cliquer sur `CoTransfert.cmd` : la page de réglage s'ouvre dans le navigateur.
 
-          Il faut un Java 21 ou plus recent deja present sur le poste. Rien n'est installe, aucun droit administrateur.
-          Mise a jour d'un poste existant : remplacer `cotransfert.jar` par celui du kit, ou publier la mise a jour depuis la page du hub.
+          Il faut un Java 21 ou plus récent déjà présent sur le poste. Rien n'est installé, aucun droit administrateur.
+          Mise à jour d'un poste existant : remplacer `cotransfert.jar` par celui du kit, ou publier la mise à jour depuis la page du hub.
 
-          Somme de controle : fichier `.sha256` joint.
+          Somme de contrôle : fichier `.sha256` joint.
           EOF
           gh release create "${{ github.ref_name }}" kit/CoTransfert-*.zip kit/CoTransfert-*.zip.sha256 \
             --repo "${{ github.repository }}" --title "CoTransfert ${{ github.ref_name }}" \
