@@ -1,5 +1,11 @@
 # CoTransfert
 
+[![CI](https://github.com/lajej2106/CoTransfert/actions/workflows/ci.yml/badge.svg)](https://github.com/lajej2106/CoTransfert/actions/workflows/ci.yml)
+[![Licence : AGPL-3.0](https://img.shields.io/badge/licence-AGPL--3.0-blue.svg)](LICENSE)
+
+**Télécharger** : le kit prêt à l'emploi (`CoTransfert.cmd` + `cotransfert.jar`) est sur la page
+[Releases](https://github.com/lajej2106/CoTransfert/releases).
+
 Synchronisation bidirectionnelle de répertoires entre deux postes Windows — un
 **hub** et un **client** — reliés par un lien réseau direct (câble
 **Thunderbolt / USB4**, Ethernet…), **sans droits admin, sans service, sans

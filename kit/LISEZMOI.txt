@@ -1,0 +1,29 @@
+CoTransfert - kit pret a l'emploi
+
+Synchronisation de dossiers entre deux postes Windows : un hub et un client.
+Le meme kit sert aux deux postes. Rien n'est installe, aucun droit administrateur.
+
+Contenu
+  CoTransfert.cmd   le seul fichier a lancer
+  cotransfert.jar   le programme
+  LICENSE           la licence (GNU AGPL-3.0)
+
+Mise en route, sur chaque poste
+1. Extraire ce dossier ou vous voulez (Documents, cle USB...).
+2. Double-cliquer sur CoTransfert.cmd. La page de CoTransfert s'ouvre dans le navigateur.
+   Aucune fenetre ne reste ouverte : CoTransfert tourne en arriere-plan.
+3. Dans la page, choisir le role du poste :
+     hub     le poste qui peut accepter une connexion (il affiche le secret a partager) ;
+     client  le poste qui se connecte a l'autre (coller le secret du hub).
+   Indiquer le dossier a synchroniser, avec le MEME NOM sur les deux postes, puis Enregistrer.
+4. Cliquer sur le canal de transfert a utiliser, le MEME sur les deux postes : lien direct
+   (cable entre les deux postes), WebDAV, Drime ou disque relais. Rien ne se synchronise
+   sans ce choix, et CoTransfert ne change jamais de canal tout seul.
+5. Pour arreter : bouton "Quitter CoTransfert" dans la page.
+6. Pour revoir la page : relancer CoTransfert.cmd (il rouvre la page sans relancer l'agent).
+
+Il faut un Java 21 ou plus recent deja present sur le poste ; le script le trouve tout seul.
+Les reglages sont gardes dans cotransfert.conf et le journal dans cotransfert.log, a cote du script.
+Diagnostic : CoTransfert.cmd --console lance l'agent dans une fenetre visible.
+
+Documentation et sources : voir la page du projet d'ou vient ce kit.

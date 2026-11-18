@@ -1,0 +1,139 @@
+# Integration continue : compile, joue toutes les suites de tests, assemble le kit.
+# Une etiquette "v*" (ex. v1.0.0) publie en plus une release avec le kit a telecharger.
+name: CI
+
+on:
+  push:
+    branches: [main]
+    tags: ['v*']
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  build:
+    name: Compilation, tests et kit
+    # Le produit vise Windows : les tests tournent sur Windows (chemins, classpath en ";").
+    runs-on: windows-latest
+    timeout-minutes: 30
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+
+      - name: Compiler (aucun avertissement tolere)
+        run: |
+          javac --release 21 -Xlint:all -Werror -d build/classes $(find src/main/java -name '*.java')
+          cp -r src/main/resources/. build/classes/
+          javac --release 21 -Xlint:all -Werror -cp build/classes -d build/test-classes $(find src/test/java -name '*.java')
+
+      - name: Tests
+        run: |
+          mkdir -p build/w
+          echec=0
+          for t in KmTest SetupApiTest UpdateTest ConflictsTest MailboxTest WebDavStoreTest DrimeStoreTest ChannelsEndToEndTest; do
+            echo "::group::$t"
+            if java -Djava.net.preferIPv4Stack=true -cp "build/classes;build/test-classes" cotransfert.$t build/w/$t > build/w/$t.log 2>&1; then
+              tail -n 5 build/w/$t.log
+            else
+              tail -n 200 build/w/$t.log
+              echo "::error::$t a echoue"
+              echec=1
+            fi
+            echo "::endgroup::"
+          done
+          echo "::group::CryptoTest"
+          if java -Djava.net.preferIPv4Stack=true -cp "build/classes;build/test-classes" cotransfert.CryptoTest --no-bench > build/w/CryptoTest.log 2>&1; then
+            tail -n 5 build/w/CryptoTest.log
+          else
+            tail -n 200 build/w/CryptoTest.log
+            echo "::error::CryptoTest a echoue"
+            echec=1
+          fi
+          echo "::endgroup::"
+          exit $echec
+
+      - name: Journaux des tests
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: journaux-tests
+          path: build/w/*.log
+          retention-days: 7
+
+      - name: Assembler le kit
+        run: |
+          if [ "${GITHUB_REF_TYPE}" = "tag" ]; then version="${GITHUB_REF_NAME}"; else version="$(date -u +%Y%m%d)-${GITHUB_SHA::7}"; fi
+          mkdir -p build/kit/CoTransfert
+          jar --create --file build/kit/CoTransfert/cotransfert.jar --main-class cotransfert.Agent -C build/classes .
+          cp CoTransfert.cmd LICENSE kit/LISEZMOI.txt build/kit/CoTransfert/
+          # Les fichiers lus par Windows gardent des fins de ligne CRLF, quel que soit le reglage de git.
+          sed -i 's/\r$//; s/$/\r/' build/kit/CoTransfert/CoTransfert.cmd build/kit/CoTransfert/LISEZMOI.txt
+          (cd build/kit && jar --create --no-manifest --file "CoTransfert-${version}.zip" CoTransfert)
+          (cd build/kit && sha256sum "CoTransfert-${version}.zip" > "CoTransfert-${version}.zip.sha256")
+          unzip -l "build/kit/CoTransfert-${version}.zip"
+          echo "KIT_VERSION=${version}" >> "$GITHUB_ENV"
+
+      - name: Verifier le contenu du kit
+        run: |
+          cd build/kit
+          unzip -q CoTransfert-*.zip -d verif
+          test -s verif/CoTransfert/CoTransfert.cmd
+          test -s verif/CoTransfert/LISEZMOI.txt
+          test -s verif/CoTransfert/LICENSE
+          unzip -p verif/CoTransfert/cotransfert.jar META-INF/MANIFEST.MF | grep -q "Main-Class: cotransfert.Agent"
+          unzip -l verif/CoTransfert/cotransfert.jar | grep -q "cotransfert/web/index.html"
+          rm -rf verif
+
+      - name: Kit en artefact
+        uses: actions/upload-artifact@v4
+        with:
+          name: CoTransfert-${{ env.KIT_VERSION }}
+          path: |
+            build/kit/CoTransfert-*.zip
+            build/kit/CoTransfert-*.zip.sha256
+          if-no-files-found: error
+
+  release:
+    name: Release
+    needs: build
+    if: github.ref_type == 'tag'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          path: kit
+          merge-multiple: true
+
+      - name: Publier la release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          cat > notes.md <<'EOF'
+          ## Installer
+
+          1. Telecharger `CoTransfert-${{ github.ref_name }}.zip` ci-dessous et l'extraire sur chaque poste.
+          2. Double-cliquer sur `CoTransfert.cmd` : la page de reglage s'ouvre dans le navigateur.
+
+          Il faut un Java 21 ou plus recent deja present sur le poste. Rien n'est installe, aucun droit administrateur.
+          Mise a jour d'un poste existant : remplacer `cotransfert.jar` par celui du kit, ou publier la mise a jour depuis la page du hub.
+
+          Somme de controle : fichier `.sha256` joint.
+          EOF
+          gh release create "${{ github.ref_name }}" kit/CoTransfert-*.zip kit/CoTransfert-*.zip.sha256 \
+            --repo "${{ github.repository }}" --title "CoTransfert ${{ github.ref_name }}" \
+            --notes-file notes.md --generate-notes --verify-tag
