@@ -337,8 +337,7 @@ public final class SyncEngine {
             for (Map.Entry<String, Index.State> e : localManifest.entrySet()) {
                 Index.State ref = index.get(e.getKey());
                 if (ref != null && ref.hash == e.getValue().hash) continue;
-                status.addRemaining(rootName, 1);                  // compense le dec de sendLocalFile
-                sendLocalFile(e.getKey());                         // base = index (ou absent)
+                sendCounted(e.getKey(), null);                     // base = index (ou absent)
                 files++;
             }
         }
@@ -438,7 +437,10 @@ public final class SyncEngine {
         if (async) incoming = 0;
         status.setRemaining(rootName, toPush.size() + incoming);
         status.recompute(rootName, true);
-        for (Map.Entry<String, Long> p : toPush.entrySet()) { sendLocalFile(p.getKey(), p.getValue()); pushed++; }
+        for (Map.Entry<String, Long> p : toPush.entrySet()) {
+            if (sendLocalFile(p.getKey(), p.getValue())) pushed++;
+            else status.decRemaining(rootName);                // disparu entre-temps : il n'est plus a envoyer
+        }
 
         // b) suppressions hors-ligne : present dans l'index de reference, absent du disque,
         //    et le pair l'a encore dans l'etat de reference (il ne l'a pas modifie).
@@ -513,23 +515,39 @@ public final class SyncEngine {
             }
             Index.State ref = index.get(ev.rel);
             if (ref != null && ref.hash == hash) return;       // aucun vrai changement
-            status.addRemaining(rootName, 1);                  // compense le dec de sendLocalFile
-            sendLocalFile(ev.rel);
+            sendCounted(ev.rel, null);
         } catch (IOException e) {
             Agent.log("envoi live %s: %s", ev.rel, e.getMessage());
         }
     }
 
-    /** Envoi dont la base est notre index : la derniere version echangee avec le pair. */
-    private void sendLocalFile(String rel) throws IOException {
-        Index.State ref = index.get(rel);
-        sendLocalFile(rel, ref != null ? ref.hash : Transfer.BASE_ABSENT);
+    /**
+     * Envoi d'un fichier qui n'etait pas compte dans "reste a faire" : on le compte,
+     * et on le decompte quoi qu'il arrive. Un fichier temporaire disparu avant ou
+     * pendant l'envoi ne doit pas laisser le dossier "en synchronisation" pour toujours.
+     * @param base hash attendu chez le pair, ou null pour prendre celui de notre index.
+     */
+    private void sendCounted(String rel, Long base) throws IOException {
+        status.addRemaining(rootName, 1);                      // compense le dec de sendLocalFile
+        boolean sent = false;
+        try {
+            if (base == null) {
+                Index.State ref = index.get(rel);
+                base = ref != null ? ref.hash : Transfer.BASE_ABSENT;
+            }
+            sent = sendLocalFile(rel, base);
+        } finally {
+            if (!sent) status.decRemaining(rootName);
+        }
     }
 
-    /** @param base hash de la version que le pair est cense avoir (cf. Transfer.Msg.base). */
-    private void sendLocalFile(String rel, long base) throws IOException {
+    /**
+     * @param base hash de la version que le pair est cense avoir (cf. Transfer.Msg.base).
+     * @return vrai si le fichier a ete envoye (et decompte), faux s'il n'existe plus.
+     */
+    private boolean sendLocalFile(String rel, long base) throws IOException {
         Path abs = dir.resolve(rel);
-        if (!Files.isRegularFile(abs)) return;
+        if (!Files.isRegularFile(abs)) return false;
         long size = Files.size(abs);
         long mtime = Files.getLastModifiedTime(abs).toMillis();
         long hash = Index.hashFile(abs);
@@ -554,6 +572,7 @@ public final class SyncEngine {
         index.put(rel, st);
         localManifest.put(rel, st);
         status.decRemaining(rootName);   // un fichier envoye de moins
+        return true;
     }
 
     /** Cadre sans contenu OP_RESOLVED ou OP_RESOLVED_ACK. */
@@ -628,8 +647,7 @@ public final class SyncEngine {
             return;
         }
         if (!Files.isRegularFile(abs)) { memo.dropMine(rel); return; }
-        status.addRemaining(rootName, 1);                      // compense le dec de sendLocalFile
-        sendLocalFile(rel, own.base);                          // marque + fichier si le contenu est bien celui du choix
+        sendCounted(rel, own.base);                            // marque + fichier si le contenu est bien celui du choix
     }
 
     /** Debut de session : envoie les choix faits sans session, ou dont l'envoi n'est jamais parti. */
