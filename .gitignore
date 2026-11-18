@@ -1,0 +1,19 @@
+build/
+# Le jar est un produit du build : il se publie en release, pas dans le depot
+cotransfert.jar
+*.log
+*.err
+# Config locale par poste (chemins propres a chaque machine)
+cotransfert.conf
+# Dossier de test local de synchronisation (donnees utilisateur)
+Sync/
+# Fichiers de mise a jour, propres a chaque poste
+cotransfert.jar.nouveau
+cotransfert.jar.precedent
+cotransfert.jar.essai
+cotransfert.maj-refusee
+# Publication de la mise a jour par le lien direct (dossier local du hub)
+cotransfert.maj/
+cotransfert.log
+cotransfert.log.1
+cotransfert.voisins
