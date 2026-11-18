@@ -16,8 +16,23 @@ même sur les deux postes ; la page le teste avant de l'enregistrer. Aucun canal
 n'est choisi par défaut et CoTransfert ne change jamais de canal tout seul
 (voir §3.7).
 
+Sur le lien direct, CoTransfert peut aussi **partager le clavier et la souris**
+d'un poste avec l'autre, et le texte copié (options désactivées par défaut).
+
 - Feuille de route et pistes d'évolution : [`ROADMAP.md`](ROADMAP.md)
 - Principes du produit (à respecter pour toute contribution) : [`CLAUDE.md`](CLAUDE.md)
+- Consignes pour les assistants de code : [`AGENTS.md`](AGENTS.md)
+- Contribuer : [`CONTRIBUTING.md`](CONTRIBUTING.md) · Sécurité : [`SECURITY.md`](SECURITY.md) · Licence : [AGPL-3.0](LICENSE)
+
+> **In English.** CoTransfert is a two-way folder sync tool between two Windows
+> PCs (a *hub* and a *client*) over a direct cable (Thunderbolt / USB4,
+> Ethernet) or, when no direct link is allowed, over WebDAV, Drime or a relay
+> disk. It targets locked-down machines: no admin rights, no driver, no
+> service, nothing to install — a single `.jar` run by an existing Java 21,
+> pure Java SE with zero dependencies. The client only makes outbound
+> connections. It also offers optional keyboard, mouse and text clipboard
+> sharing over the direct link. Documentation is in French. Licensed under
+> AGPL-3.0.
 
 ---
 
