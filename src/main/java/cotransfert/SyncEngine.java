@@ -380,7 +380,6 @@ public final class SyncEngine {
         }
         Agent.log("manifeste du pair recu (%d entrees), reconciliation...", peer.size());
 
-        int pushed = 0, deleted = 0;
         final boolean async = !session.interactive();
 
         // Q : fichiers que le PAIR va nous pousser (compteur "restants" cote reception)
@@ -437,13 +436,10 @@ public final class SyncEngine {
         if (async) incoming = 0;
         status.setRemaining(rootName, toPush.size() + incoming);
         status.recompute(rootName, true);
-        for (Map.Entry<String, Long> p : toPush.entrySet()) {
-            if (sendLocalFile(p.getKey(), p.getValue())) pushed++;
-            else status.decRemaining(rootName);                // disparu entre-temps : il n'est plus a envoyer
-        }
 
         // b) suppressions hors-ligne : present dans l'index de reference, absent du disque,
         //    et le pair l'a encore dans l'etat de reference (il ne l'a pas modifie).
+        java.util.Map<String, Long> toDelete = new java.util.LinkedHashMap<>();
         for (Map.Entry<String, Index.State> e : index.entries()) {
             String rel = e.getKey();
             if (localManifest.containsKey(rel)) continue;      // toujours present : pas une suppression
@@ -451,17 +447,55 @@ public final class SyncEngine {
             Index.State their = peer.get(rel);
             if (their == null) continue;                       // le pair ne l'a plus non plus
             if (their.hash == e.getValue().hash) {
-                sendDelete(rel, their.hash);
-                index.remove(rel);
-                deleted++;
+                toDelete.put(rel, their.hash);
             } else {
                 Agent.log("[CONFLIT] %s supprime ici mais modifie chez le pair -> conserve", rel);
             }
         }
 
-        index.save();
-        Agent.log("reconciliation: %d pousse(s), %d suppression(s)", pushed, deleted);
-        status.log(rootName, "reconcilie: " + pushed + " envoye(s), " + incoming + " a recevoir");
+        // Les envois partent d'un autre thread : ce thread-ci est le SEUL lecteur du
+        // flux. S'il envoyait lui-meme, deux pairs qui ont chacun beaucoup a pousser
+        // rempliraient les tampons TCP l'un de l'autre sans plus jamais lire : blocage
+        // definitif. Le recepteur continue donc de vider le flux pendant les envois.
+        final int expected = incoming;
+        final Thread previous = reconciler;
+        Thread t = new Thread(() -> pushReconciled(previous, toPush, toDelete, expected), "cotp-reconcile");
+        t.setDaemon(true);
+        reconciler = t;
+        t.start();
+    }
+
+    /** Thread des envois de la reconciliation (voir {@link #handleManifest}). */
+    private volatile Thread reconciler;
+
+    private void pushReconciled(Thread previous, Map<String, Long> toPush, Map<String, Long> toDelete, int incoming) {
+        int pushed = 0, deleted = 0;
+        try {
+            if (previous != null) previous.join();   // une reconciliation a la fois, dans l'ordre
+            for (Map.Entry<String, Long> p : toPush.entrySet()) {
+                if (!running) return;
+                if (sendLocalFile(p.getKey(), p.getValue())) pushed++;
+                else status.decRemaining(rootName);            // disparu entre-temps : il n'est plus a envoyer
+            }
+            for (Map.Entry<String, Long> d : toDelete.entrySet()) {
+                if (!running) return;
+                String rel = d.getKey();
+                // Reapparu, ou recu du pair entre-temps : ce n'est plus une suppression.
+                if (localManifest.containsKey(rel) || Files.exists(dir.resolve(rel))) continue;
+                sendDelete(rel, d.getValue());
+                index.remove(rel);
+                deleted++;
+            }
+            index.save();
+            Agent.log("reconciliation: %d pousse(s), %d suppression(s)", pushed, deleted);
+            status.log(rootName, "reconcilie: " + pushed + " envoye(s), " + incoming + " a recevoir");
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+        } catch (IOException e) {
+            if (running) Agent.log("reconciliation interrompue apres %d envoi(s) (%s)", pushed, e.getMessage());
+        } catch (Exception e) {
+            Agent.log("reconciliation: erreur (%s)", e);
+        }
     }
 
     // =======================================================================

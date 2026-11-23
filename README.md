@@ -987,6 +987,7 @@ java -cp "build/classes;build/test-classes" cotransfert.WebDavStoreTest <dossier
 java -cp "build/classes;build/test-classes" cotransfert.DrimeStoreTest <dossier-de-travail>
 java -cp "build/classes;build/test-classes" cotransfert.ChannelsEndToEndTest <dossier-de-travail>
 java -cp "build/classes;build/test-classes" cotransfert.ConflictsTest <dossier-de-travail>
+java -cp "build/classes;build/test-classes" cotransfert.ReconcileDeadlockTest <dossier-de-travail>
 java -cp "build/classes;build/test-classes" cotransfert.SetupApiTest <dossier-de-travail>
 java -cp "build/classes;build/test-classes" cotransfert.UpdateTest <dossier-de-travail>
 java -cp "build/classes;build/test-classes" cotransfert.KmTest <dossier-de-travail>
@@ -999,6 +1000,7 @@ java -cp "build/classes;build/test-classes" cotransfert.CryptoTest --no-bench
 | `WebDavStoreTest` | Magasin WebDAV contre un faux serveur WebDAV, puis une session hub ↔ client complète à travers lui |
 | `DrimeStoreTest` | Magasin Drime contre un faux serveur Drime, puis une session hub ↔ client complète à travers lui |
 | `ChannelsEndToEndTest` | Bout en bout du choix manuel : chaque canal par lots (hub seul, convergence, panne sans bascule, reprise), changements de canal, toujours contre les faux serveurs |
+| `ReconcileDeadlockTest` | Réconciliation croisée sur le lien direct : les deux postes ont chacun beaucoup de fichiers à pousser en même temps (réorganisation des dossiers) ; vérifie que le flux continue d'être lu pendant les envois et que les deux arbres convergent sans blocage |
 | `ConflictsTest` | Écran « Conflits » de bout en bout : vrai conflit sur un canal par lots, liste et compteur, « ma version » / « celle de l'autre poste », résolution groupée, conflit d'un seul côté, résolution sans session, choix croisés, fichier disparu, copies jamais transmises, refus |
 | `SetupApiTest` | API de réglage de l'IHM : gardes de la boucle locale, validation, enregistrement atomique, secrets, essais de canal, choix du canal (`/api/channel`), mise à jour (`/api/update/*`), journal (`/api/log`), conflits (`/api/conflicts*`), relance |
 | `UpdateTest` | Mise à jour par le canal : version d'un jar, publier / vérifier / installer (disque, faux WebDAV, faux Drime, lien direct par les routes `/maj/` du hub), refus, échange, retour arrière, états, journal |

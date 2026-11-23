@@ -88,6 +88,7 @@ java -cp "build/classes;build/test-classes" cotransfert.DrimeStoreTest <dossier-
 java -cp "build/classes;build/test-classes" cotransfert.ChannelsEndToEndTest <dossier-de-travail>
 java -cp "build/classes;build/test-classes" cotransfert.CryptoTest --no-bench
 java -cp "build/classes;build/test-classes" cotransfert.ConflictsTest <dossier-de-travail>
+java -cp "build/classes;build/test-classes" cotransfert.ReconcileDeadlockTest <dossier-de-travail>
 java -cp "build/classes;build/test-classes" cotransfert.SetupApiTest <dossier-de-travail>
 java -cp "build/classes;build/test-classes" cotransfert.UpdateTest <dossier-de-travail>
 java -cp "build/classes;build/test-classes" cotransfert.KmTest <dossier-de-travail>

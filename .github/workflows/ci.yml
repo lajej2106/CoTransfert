@@ -43,7 +43,7 @@ jobs:
         run: |
           mkdir -p build/w
           echec=0
-          for t in KmTest SetupApiTest UpdateTest ConflictsTest MailboxTest WebDavStoreTest DrimeStoreTest ChannelsEndToEndTest; do
+          for t in KmTest SetupApiTest UpdateTest ConflictsTest ReconcileDeadlockTest MailboxTest WebDavStoreTest DrimeStoreTest ChannelsEndToEndTest; do
             echo "::group::$t"
             if java -Djava.net.preferIPv4Stack=true -cp "build/classes;build/test-classes" cotransfert.$t build/w/$t > build/w/$t.log 2>&1; then
               tail -n 5 build/w/$t.log
