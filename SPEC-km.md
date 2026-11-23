@@ -17,8 +17,9 @@ en Bluetooth.
   les frappes ne circulent jamais en clair.
 - Java SE pur : `java.awt.Robot` pour rejouer, une fenêtre AWT pour capter. Ni
   pilote, ni droit administrateur, ni code natif, ni crochet clavier global.
-- **Presse-papiers : texte seulement, en option** (`km.clipboard`, désactivée par
-  défaut, à activer sur les deux postes). Voir « Presse-papiers » plus bas.
+- **Presse-papiers : texte seulement** (`km.clipboard`, activée par défaut dès
+  que le partage clavier-souris l'est, décochable ; effective seulement si les
+  deux postes l'ont). Voir « Presse-papiers » plus bas.
 
 | Classe | Rôle |
 |---|---|
@@ -144,7 +145,7 @@ en face, jamais de souris envoyée d'un côté et de frappes restées de l'autre
 | `km.edge.delay` | 0 à 5000 ms | `250` |
 | `km.hotkey` | Ctrl et/ou Alt, Maj facultatif, puis une lettre, un chiffre ou F1 à F12 ; `aucun` | `Ctrl+Alt+F12` |
 | `km.return.button` | `0`, `4`, `5` | `0` |
-| `km.clipboard` | `true`, `false` | `false` |
+| `km.clipboard` | `true`, `false` | `true` |
 
 Exemple, hub à droite du client : `km.edge=droite` sur le client, `km.edge=gauche`
 sur le hub.
@@ -194,11 +195,14 @@ Le texte copié **suit le clavier**, et rien d'autre ne déclenche un envoi :
 
 Règles :
 
-- option `km.clipboard`, **désactivée par défaut**. Un poste n'envoie que si
-  l'autre a annoncé qu'il accepte (drapeau `FLAG_CLIPBOARD` de `HELLO`), et un
-  poste où l'option est coupée ignore les cadres reçus : il faut donc l'activer
-  **des deux côtés**. À n'activer que si les règles des deux postes autorisent
-  cet échange : on ne s'en sert pas pour contourner une politique de sécurité ;
+- option `km.clipboard`, **activée par défaut** : elle suit l'activation du
+  partage clavier-souris (lui-même désactivé par défaut) et se décoche dans les
+  réglages (« Partager le texte copié »). Un poste n'envoie que si l'autre a
+  annoncé qu'il accepte (drapeau `FLAG_CLIPBOARD` de `HELLO`), et un poste où
+  l'option est coupée ignore les cadres reçus : il suffit de la décocher **d'un
+  seul côté** pour que rien ne passe. À décocher si les règles de l'un des postes
+  n'autorisent pas cet échange : on ne s'en sert pas pour contourner une
+  politique de sécurité ;
 - texte seulement (`DataFlavor.stringFlavor`), 512 Ko au plus en UTF-8 ; un
   texte plus long n'est pas envoyé et le journal le dit ;
 - un texte déjà envoyé ou reçu n'est pas renvoyé tant qu'il n'a pas changé ;

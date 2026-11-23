@@ -15,7 +15,8 @@ import java.util.Properties;
  *   km.edge.delay=250              duree en ms pendant laquelle le pointeur doit rester contre le bord (0..5000)
  *   km.hotkey=Ctrl+Alt+F12         raccourci de bascule ; "aucun" = pas de raccourci
  *   km.return.button=0|4|5         bouton lateral de la souris qui rend le controle (0 = aucun)
- *   km.clipboard=true|false        le texte copie suit le clavier d'un poste a l'autre (defaut : false)
+ *   km.clipboard=true|false        le texte copie suit le clavier d'un poste a l'autre (defaut : true,
+ *                                  actif des que le partage clavier-souris l'est)
  */
 final class KmSettings {
 
@@ -24,6 +25,8 @@ final class KmSettings {
 
     static final int DEFAULT_DELAY_MS = 250, MAX_DELAY_MS = 5000;
     static final String DEFAULT_HOTKEY = "Ctrl+Alt+F12";
+    /** Le presse-papiers suit le partage clavier-souris des qu'on l'active (decochable). */
+    static final boolean DEFAULT_CLIPBOARD = true;
 
     /** Bord d'ecran. */
     enum Edge {
@@ -106,7 +109,7 @@ final class KmSettings {
         }
     }
 
-    static final KmSettings DEFAULT = new KmSettings(false, Edge.NONE, DEFAULT_DELAY_MS, Hotkey.parse(DEFAULT_HOTKEY), 0, false);
+    static final KmSettings DEFAULT = new KmSettings(false, Edge.NONE, DEFAULT_DELAY_MS, Hotkey.parse(DEFAULT_HOTKEY), 0, DEFAULT_CLIPBOARD);
 
     final boolean enabled;
     final Edge edge;
@@ -115,11 +118,11 @@ final class KmSettings {
     final Hotkey hotkey;
     /** 0 (aucun), 4 ou 5. */
     final int returnButton;
-    /** Le texte du presse-papiers suit le clavier (a activer sur les deux postes). */
+    /** Le texte du presse-papiers suit le clavier (actif par defaut avec le partage clavier-souris). */
     final boolean clipboard;
 
     KmSettings(boolean enabled, Edge edge, int edgeDelayMs, Hotkey hotkey, int returnButton) {
-        this(enabled, edge, edgeDelayMs, hotkey, returnButton, false);
+        this(enabled, edge, edgeDelayMs, hotkey, returnButton, DEFAULT_CLIPBOARD);
     }
 
     KmSettings(boolean enabled, Edge edge, int edgeDelayMs, Hotkey hotkey, int returnButton, boolean clipboard) {
@@ -183,10 +186,11 @@ final class KmSettings {
         else if (v.equals("5")) button = 5;
         else if (!v.isEmpty() && !v.equals("0")) pb.add(K_RETURN + " : 0, 4 ou 5 attendu");
 
-        boolean clipboard = false;
+        boolean clipboard = DEFAULT_CLIPBOARD;
         v = value(p, K_CLIPBOARD);
         if (v.equalsIgnoreCase("true")) clipboard = true;
-        else if (!v.isEmpty() && !v.equalsIgnoreCase("false")) pb.add(K_CLIPBOARD + " : true ou false attendu");
+        else if (v.equalsIgnoreCase("false")) clipboard = false;
+        else if (!v.isEmpty()) pb.add(K_CLIPBOARD + " : true ou false attendu");
 
         return new KmSettings(enabled, edge, delay, hotkey, button, clipboard);
     }
@@ -215,7 +219,7 @@ final class KmSettings {
         l.add("# km.edge : bord de CE poste derriere lequel se trouve l'autre (gauche, droite, haut, bas, aucun).");
         l.add("# km.edge.delay : ms contre le bord avant de passer ; km.hotkey : raccourci de bascule (ou aucun) ;");
         l.add("# km.return.button : bouton lateral de la souris qui rend le controle (4, 5, ou 0 = aucun).");
-        l.add("# km.clipboard : le texte copie suit le clavier d'un poste a l'autre (a activer sur les deux postes).");
+        l.add("# km.clipboard : le texte copie suit le clavier d'un poste a l'autre (actif par defaut ; false pour le couper).");
         Properties p = toProperties(), d = DEFAULT.toProperties();
         for (String k : new String[] { K_ENABLED, K_EDGE, K_DELAY, K_HOTKEY, K_RETURN, K_CLIPBOARD }) {
             String v = p.getProperty(k);

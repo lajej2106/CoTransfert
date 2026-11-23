@@ -16,8 +16,8 @@ import java.util.function.Supplier;
  * l'autre. Fonction optionnelle, desactivee par defaut, reservee au canal
  * "direct" et a un secret partage (flux chiffre).
  *
- * Presse-papiers (option km.clipboard, desactivee par defaut, a activer sur les
- * deux postes) : le TEXTE copie suit le clavier. Il part vers l'autre poste
+ * Presse-papiers (option km.clipboard, active par defaut avec le partage
+ * clavier-souris, effective si les deux postes l'ont) : le TEXTE copie suit le clavier. Il part vers l'autre poste
  * quand on en prend le controle, et revient quand le controle est rendu. Jamais
  * de fichier ni d'image, jamais d'envoi en dehors d'un passage du controle.
  *

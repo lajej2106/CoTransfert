@@ -270,7 +270,7 @@ relay=*:\CoTransfertRelais
 # km.edge.delay=250        # ms contre le bord avant de passer
 # km.hotkey=Ctrl+Alt+F12   # raccourci de bascule, ou aucun
 # km.return.button=0       # bouton latéral de la souris qui rend la main : 4, 5, ou 0
-# km.clipboard=false       # le texte copié suit le clavier (à activer sur les deux postes)
+# km.clipboard=true        # le texte copié suit le clavier (false pour le couper)
 ```
 
 - Un canal est **réglé** quand ses clés obligatoires sont renseignées :
@@ -612,9 +612,10 @@ synchronisation : un gros fichier ne retarde pas la souris.
   Windows se réserve (touche Windows, Alt+Tab, Ctrl+Alt+Suppr) restent sur le
   poste et rendent la main ; l'écran de verrouillage, les invites UAC et les
   fenêtres élevées ne se pilotent pas.
-- **Texte copié** : en option (« Partager le texte copié », désactivée par
-  défaut, à activer sur les deux postes), le texte du presse-papiers suit le
-  clavier d'un poste à l'autre. Texte seulement, 512 Ko au plus ; ni fichier ni
+- **Texte copié** : activé avec le partage clavier-souris (case « Partager le
+  texte copié », cochée par défaut, à décocher pour le couper ; elle doit être
+  cochée sur les deux postes), le texte du presse-papiers suit le clavier d'un
+  poste à l'autre. Texte seulement, 512 Ko au plus ; ni fichier ni
   image.
 
 Protocole, états, sécurité et points restant à valider sur de vrais postes :

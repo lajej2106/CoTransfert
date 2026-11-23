@@ -868,10 +868,11 @@
                 <label class="optrow" for="kmClipboard" style="font-weight:400; margin-bottom:0">
                   <input type="checkbox" id="kmClipboard" aria-describedby="kmClipboardHelp e-kmClipboard">
                   <b>Partager le texte copié</b>
-                  <small id="kmClipboardHelp">Désactivé par défaut ; à activer sur les deux postes. Le texte copié suit
-                    le clavier : il part vers l'autre poste quand vous y passez et revient quand vous revenez. Texte
-                    seulement (ni fichier ni image), 512 Ko au plus. Ne l'activez que si les règles de vos deux postes
-                    autorisent cet échange.</small>
+                  <small id="kmClipboardHelp">Coché par défaut avec le partage clavier-souris ; décochez pour le couper.
+                    Le texte copié suit le clavier : il part vers l'autre poste quand vous y passez et revient quand
+                    vous revenez. Il ne passe que si la case est cochée sur les deux postes. Texte seulement (ni
+                    fichier ni image), 512 Ko au plus. Décochez-la si les règles de l'un de vos postes n'autorisent
+                    pas cet échange.</small>
                 </label>
                 <p class="ferr" id="e-kmClipboard"></p>
               </div>
@@ -2115,7 +2116,7 @@ function renderKm(){
   }
   if(k.clipboard === true && k.state === 'idle' && !why){
     text += k.peerClipboard === true ? ' Le texte copié suit le clavier.'
-      : ' Le texte copié ne suit pas : l\'option n\'est pas activée sur l\'autre poste.';
+      : ' Le texte copié ne suit pas : l\'option est décochée sur l\'autre poste (ou il n\'est pas encore à jour).';
   }
   if(Number(k.ignored) > 0) text += ' ' + k.ignored + ' touche(s) non reconnue(s) par ce poste ont été ignorées.';
   setText($('kmState'), text);

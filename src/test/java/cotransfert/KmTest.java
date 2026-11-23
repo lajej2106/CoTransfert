@@ -176,16 +176,20 @@ public final class KmTest {
         check(lines.contains("# km.enabled=false") && lines.contains("# km.hotkey=Ctrl+Alt+F12"), "conf : valeurs par defaut en commentaire");
         check(s.confLines().contains("km.enabled=true") && s.confLines().contains("km.edge=droite"), "conf : valeurs reglees ecrites");
         for (String l : s.confLines()) check(l.chars().allMatch(c -> c < 128), "conf sans accent : " + l);
-        check(s.json().equals("{\"enabled\":true,\"edge\":\"droite\",\"delay\":400,\"hotkey\":\"Ctrl+Maj+K\",\"returnButton\":5,\"clipboard\":false}"), "reglages en JSON : " + s.json());
+        check(s.json().equals("{\"enabled\":true,\"edge\":\"droite\",\"delay\":400,\"hotkey\":\"Ctrl+Maj+K\",\"returnButton\":5,\"clipboard\":true}"), "reglages en JSON : " + s.json());
         Properties cp = s.toProperties();
-        check("false".equals(cp.getProperty(KmSettings.K_CLIPBOARD)), "presse-papiers : coupe par defaut dans les proprietes");
-        cp.setProperty(KmSettings.K_CLIPBOARD, "true");
-        KmSettings withClip = KmSettings.from(cp, null);
-        check(withClip.clipboard && !withClip.equals(s) && withClip.confLines().contains("km.clipboard=true")
-                && withClip.json().endsWith(",\"clipboard\":true}"), "presse-papiers : lu, ecrit et compare");
+        check("true".equals(cp.getProperty(KmSettings.K_CLIPBOARD)), "presse-papiers : actif par defaut dans les proprietes");
+        check(KmSettings.DEFAULT.clipboard && lines.contains("# km.clipboard=true"), "presse-papiers : actif par defaut, en commentaire dans la conf");
+        Properties en2 = new Properties();
+        en2.setProperty("km.enabled", "true");
+        check(KmSettings.from(en2, null).clipboard, "activer le partage clavier-souris active le presse-papiers");
+        cp.setProperty(KmSettings.K_CLIPBOARD, "false");
+        KmSettings noClip = KmSettings.from(cp, null);
+        check(!noClip.clipboard && !noClip.equals(s) && noClip.confLines().contains("km.clipboard=false")
+                && noClip.json().endsWith(",\"clipboard\":false}"), "presse-papiers : decoche, lu, ecrit et compare");
         cp.setProperty(KmSettings.K_CLIPBOARD, "oui");
         List<String> clipPb = new ArrayList<>();
-        check(!KmSettings.from(cp, clipPb).clipboard && clipPb.size() == 1 && clipPb.get(0).startsWith(KmSettings.K_CLIPBOARD), "presse-papiers : valeur invalide signalee");
+        check(KmSettings.from(cp, clipPb).clipboard == KmSettings.DEFAULT_CLIPBOARD && clipPb.size() == 1 && clipPb.get(0).startsWith(KmSettings.K_CLIPBOARD), "presse-papiers : valeur invalide signalee");
         check(KmSettings.Edge.LEFT.opposite() == KmSettings.Edge.RIGHT && KmSettings.Edge.TOP.opposite() == KmSettings.Edge.BOTTOM
                 && KmSettings.Edge.NONE.opposite() == KmSettings.Edge.NONE, "bord oppose");
         for (KmSettings.Edge ed : KmSettings.Edge.values()) check(KmSettings.Edge.fromWire(ed.wire()) == ed, "bord sur le fil : " + ed);
@@ -561,13 +565,13 @@ public final class KmTest {
             check(rig.client.json().contains("\"peerClipboard\":false"), "etat : l'autre poste n'accepte pas le presse-papiers");
         }
 
-        // Option coupee partout (defaut) : aucun envoi.
-        try (Rig rig = new Rig(null, on(KmSettings.Edge.NONE), on(KmSettings.Edge.NONE)).serve()) {
+        // Option decochee des deux cotes : aucun envoi.
+        try (Rig rig = new Rig(null, onClip(false), onClip(false)).serve()) {
             rig.awaitReady();
             rig.clientEnv.clip.text = "texte du client";
             roundTrip(rig);
             back(rig);
-            check(rig.hubEnv.clip.writes.get() == 0 && !KmSettings.DEFAULT.clipboard, "par defaut : presse-papiers non partage");
+            check(rig.hubEnv.clip.writes.get() == 0, "option decochee : presse-papiers non partage");
         }
     }
 
@@ -1083,7 +1087,7 @@ public final class KmTest {
             DataOutputStream out = new DataOutputStream(peer.getOutputStream());
             DataInputStream in = new DataInputStream(peer.getInputStream());
             peer.setSoTimeout(3000);
-            check(KmProtocol.read(in).equals(KmProtocol.hello(KmProtocol.FLAG_ACCEPTS | KmProtocol.FLAG_HUB)), "le hub s'annonce : version, accepte, hub");
+            check(KmProtocol.read(in).equals(KmProtocol.hello(KmProtocol.FLAG_ACCEPTS | KmProtocol.FLAG_HUB | KmProtocol.FLAG_CLIPBOARD)), "le hub s'annonce : version, accepte, hub, presse-papiers (defaut)");
             check(KmProtocol.read(in).type() == KmProtocol.HEARTBEAT, "le hub emet des battements de coeur");
             // Le pair reste vivant un moment grace a ses battements, au-dela du delai de silence.
             KmProtocol.write(out, KmProtocol.hello(KmProtocol.FLAG_ACCEPTS));
